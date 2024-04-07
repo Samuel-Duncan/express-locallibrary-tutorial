@@ -1,43 +1,34 @@
-// mongodb+srv://samueliraduncan:RvOGAbqnz782if3G@cluster0.ldoqhmt.mongodb.net/local_library?retryWrites=true&w=majority&appName=Cluster0
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
 
-const createError = require('http-errors');
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-
-const mongoose = require('mongoose');
-// Import routes for "catalog" area of site
-const compression = require('compression'); // production
-const helmet = require('helmet'); // production
-const RateLimit = require('express-rate-limit');
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
-const catalogRouter = require('./routes/catalog');
+const compression = require("compression");
+const helmet = require("helmet");
 
 const app = express();
 
 // Set up rate limiter: maximum of twenty requests per minute
+const RateLimit = require("express-rate-limit");
+
 const limiter = RateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 20,
+  windowMs: 1 * 10 * 1000, // 10 seconds
+  max: 10,
 });
 // Apply rate limiter to all requests
 app.use(limiter);
 
-// Add helmet to the middleware chain.
-// Set CSP headers to allow our Bootstrap and Jquery to be served
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      'script-src': ["'self'", 'code.jquery.com', 'cdn.jsdelivr.net'],
-    },
-  }),
-);
+// Set up mongoose connection
+const mongoose = require("mongoose");
+const catalogRouter = require("./routes/catalog"); // Import routes for "catalog" area of site
+const usersRouter = require("./routes/users");
+const indexRouter = require("./routes/index");
 
-mongoose.set('strictQuery', false);
+mongoose.set("strictQuery", false);
+
 const dev_db_url =
-  'mongodb+srv://your_user_name:your_password@cluster0.lz91hw2.mongodb.net/local_library?retryWrites=true&w=majority';
+  "mongodb+srv://cooluser:coolpassword@cluster0.lz91hw2.mongodb.net/local_library?retryWrites=true&w=majority";
 const mongoDB = process.env.MONGODB_URI || dev_db_url;
 
 main().catch((err) => console.log(err));
@@ -46,20 +37,29 @@ async function main() {
 }
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "pug");
 
-app.use(logger('dev'));
+app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use(compression()); // Compress all routes
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "script-src": ["'self'", "code.jquery.com", "cdn.jsdelivr.net"],
+    },
+  })
+);
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/catalog', catalogRouter);
+app.use(compression()); // Compress all routes
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+app.use("/catalog", catalogRouter); // Add catalog routes to middleware chain.
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -67,14 +67,14 @@ app.use((req, res, next) => {
 });
 
 // error handler
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   // set locals, only providing error in development
   res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.render("error");
 });
 
 module.exports = app;
