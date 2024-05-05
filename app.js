@@ -1,3 +1,4 @@
+require("dotenv").config();
 const createError = require("http-errors");
 const express = require("express");
 const path = require("path");
@@ -26,10 +27,7 @@ const usersRouter = require("./routes/users");
 const indexRouter = require("./routes/index");
 
 mongoose.set("strictQuery", false);
-
-const dev_db_url =
-  "mongodb+srv://cooluser:coolpassword@cluster0.lz91hw2.mongodb.net/local_library?retryWrites=true&w=majority";
-const mongoDB = process.env.MONGODB_URI || dev_db_url;
+const mongoDB = process.env.MONGODB_URI || process.env.DEV_DB_URL;
 
 main().catch((err) => console.log(err));
 async function main() {
